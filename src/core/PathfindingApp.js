@@ -467,6 +467,8 @@ export class PathfindingApp {
         this.startTime = Date.now();
         
         console.log(`Starting ${this.currentAlgorithm} simulation`); // Debug
+        console.log('Parameters:', this.params); // Debug
+        console.log('Start pos:', this.startPos, 'End pos:', this.endPos); // Debug
         
         // Create appropriate solver
         try {

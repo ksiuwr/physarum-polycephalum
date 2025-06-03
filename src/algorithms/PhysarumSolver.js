@@ -2,6 +2,8 @@
 // This algorithm simulates the behavior of slime mold to find optimal paths
 export class PhysarumSolver {
     constructor(maze, startPos, endPos, params) {
+        console.log('PhysarumSolver constructor called with:', { maze: maze.length + 'x' + maze[0].length, startPos, endPos, params }); // Debug
+        
         this.maze = maze;
         this.width = maze[0].length;
         this.height = maze.length;
@@ -29,9 +31,12 @@ export class PhysarumSolver {
     step() {
         this.iteration++;
         
+        console.log(`Physarum step ${this.iteration}`); // Debug
+        
         // Auto-converge after reasonable iterations
         if (this.iteration >= 150) {
             this.converged = true;
+            console.log('Physarum converged after 150 iterations'); // Debug
             this.findMainPath();
             return this.createResult();
         }
@@ -42,7 +47,10 @@ export class PhysarumSolver {
         this.updateDiameters();
         this.checkConvergence();
         
-        return this.createResult();
+        const result = this.createResult();
+        console.log(`Step ${this.iteration}, path length: ${this.path.length}, converged: ${this.converged}`); // Debug
+        
+        return result;
     }
 
     setBoundaryConditions() {
@@ -153,52 +161,136 @@ export class PhysarumSolver {
     }
 
     checkConvergence() {
-        if (this.iteration > 50 && this.maxFlow < 0.01) {
-            this.stabilityCounter++;
-            if (this.stabilityCounter >= 10) {
+        // More sophisticated convergence detection
+        // Physarum converges when the tube network stabilizes
+        
+        if (this.iteration > 30) { // Give it time to explore first
+            // Check if flows have stabilized (low change rate)
+            const flowStability = this.maxFlow < 0.005;
+            
+            // Check if there's a clear dominant path forming
+            const allDiameters = [...this.diameters.horizontal.flat(), ...this.diameters.vertical.flat()];
+            const maxDiameter = Math.max(...allDiameters);
+            const avgDiameter = allDiameters.reduce((a, b) => a + b, 0) / allDiameters.length;
+            const hasStrongPath = maxDiameter > avgDiameter * 3; // Strong path is 3x thicker than average
+            
+            if (flowStability && hasStrongPath) {
+                this.stabilityCounter++;
+                if (this.stabilityCounter >= 5) { // Reduced from 10 for faster response
+                    this.converged = true;
+                    this.findMainPath();
+                    console.log(`Physarum converged after ${this.iteration} iterations with max diameter ${maxDiameter.toFixed(4)}`);
+                }
+            } else {
+                this.stabilityCounter = Math.max(0, this.stabilityCounter - 1); // Gradual decay
+            }
+        }
+        
+        // Also check for diameter-based convergence
+        if (this.iteration > 80) {
+            const allDiameters = [...this.diameters.horizontal.flat(), ...this.diameters.vertical.flat()];
+            const significantTubes = allDiameters.filter(d => d > 0.1).length;
+            const totalTubes = allDiameters.length;
+            
+            // If most tubes have withered away, the network has converged
+            if (significantTubes < totalTubes * 0.3) {
                 this.converged = true;
                 this.findMainPath();
+                console.log(`Physarum converged by tube pruning: ${significantTubes}/${totalTubes} tubes remain`);
             }
-        } else {
-            this.stabilityCounter = 0;
         }
     }
 
     findMainPath() {
-        // Simple BFS to find any path for demonstration
-        const queue = [this.startPos];
+        console.log('Starting findMainPath()'); // Debug
+        
+        // Find the path following the thickest slime mold tubes (highest diameters)
+        // This is the TRUE Physarum path, not a cheating BFS!
+        
+        const path = [this.startPos];
+        let current = { ...this.startPos };
         const visited = Array(this.height).fill().map(() => Array(this.width).fill(false));
-        const parent = Array(this.height).fill().map(() => Array(this.width).fill(null));
+        visited[current.y][current.x] = true;
         
-        visited[this.startPos.y][this.startPos.x] = true;
+        console.log(`Starting from ${current.x}, ${current.y} to ${this.endPos.x}, ${this.endPos.y}`); // Debug
         
-        while (queue.length > 0) {
-            const current = queue.shift();
+        // Follow the thickest tubes from start to end
+        while (current.x !== this.endPos.x || current.y !== this.endPos.y) {
+            let bestNext = null;
+            let maxDiameter = 0;
             
-            if (current.x === this.endPos.x && current.y === this.endPos.y) {
-                // Reconstruct path
-                const path = [];
-                let node = current;
-                while (node) {
-                    path.unshift(node);
-                    node = parent[node.y][node.x];
+            // Check all 4 directions and find the thickest tube
+            const directions = [
+                { dx: 1, dy: 0, isHorizontal: true, edgeX: current.x, edgeY: current.y },      // Right
+                { dx: -1, dy: 0, isHorizontal: true, edgeX: current.x - 1, edgeY: current.y }, // Left  
+                { dx: 0, dy: 1, isHorizontal: false, edgeX: current.x, edgeY: current.y },     // Down
+                { dx: 0, dy: -1, isHorizontal: false, edgeX: current.x, edgeY: current.y - 1 } // Up
+            ];
+            
+            for (const dir of directions) {
+                const nx = current.x + dir.dx;
+                const ny = current.y + dir.dy;
+                
+                // Check if the next cell is valid and not visited
+                if (!this.isValidCell(nx, ny) || this.maze[ny][nx] === 1 || visited[ny][nx]) {
+                    continue;
                 }
-                this.path = path;
-                return;
+                
+                // Check if the edge exists and get its diameter
+                if (dir.isHorizontal && dir.edgeX >= 0 && dir.edgeX < this.width - 1 && 
+                    dir.edgeY >= 0 && dir.edgeY < this.height) {
+                    const diameter = this.diameters.horizontal[dir.edgeY][dir.edgeX];
+                    if (diameter > maxDiameter) {
+                        maxDiameter = diameter;
+                        bestNext = { x: nx, y: ny };
+                    }
+                } else if (!dir.isHorizontal && dir.edgeX >= 0 && dir.edgeX < this.width && 
+                           dir.edgeY >= 0 && dir.edgeY < this.height - 1) {
+                    const diameter = this.diameters.vertical[dir.edgeY][dir.edgeX];
+                    if (diameter > maxDiameter) {
+                        maxDiameter = diameter;
+                        bestNext = { x: nx, y: ny };
+                    }
+                }
             }
             
-            const directions = [[0, 1], [1, 0], [0, -1], [-1, 0]];
-            for (const [dx, dy] of directions) {
-                const nx = current.x + dx;
-                const ny = current.y + dy;
-                
-                if (this.isValidCell(nx, ny) && this.maze[ny][nx] === 0 && !visited[ny][nx]) {
-                    visited[ny][nx] = true;
-                    parent[ny][nx] = current;
-                    queue.push({ x: nx, y: ny });
+            // If we found a good next step, take it
+            if (bestNext && maxDiameter > 0.01) { // Only follow meaningful tubes
+                current = bestNext;
+                visited[current.y][current.x] = true;
+                path.push({ ...current });
+            } else {
+                // If stuck, try to find any unvisited neighbor (fallback)
+                let foundAlternative = false;
+                for (const dir of directions) {
+                    const nx = current.x + dir.dx;
+                    const ny = current.y + dir.dy;
+                    
+                    if (this.isValidCell(nx, ny) && this.maze[ny][nx] === 0 && !visited[ny][nx]) {
+                        current = { x: nx, y: ny };
+                        visited[current.y][current.x] = true;
+                        path.push({ ...current });
+                        foundAlternative = true;
+                        break;
+                    }
                 }
+                
+                // If completely stuck, break to avoid infinite loop
+                if (!foundAlternative) {
+                    console.warn('Physarum path finding got stuck - slime mold could not reach the target');
+                    break;
+                }
+            }
+            
+            // Safety check to prevent infinite loops
+            if (path.length > this.width * this.height) {
+                console.warn('Physarum path too long - stopping to prevent infinite loop');
+                break;
             }
         }
+        
+        this.path = path;
+        console.log(`Physarum found path of length ${path.length} following tube network`);
     }
 
     isBoundaryPoint(x, y) {
@@ -213,6 +305,7 @@ export class PhysarumSolver {
     createResult() {
         const potentials = this.potentials.flat().filter(p => p > 0);
         const allDiameters = [...this.diameters.horizontal.flat(), ...this.diameters.vertical.flat()];
+        const significantTubes = allDiameters.filter(d => d > 0.1);
         
         return {
             iteration: this.iteration,
@@ -230,8 +323,28 @@ export class PhysarumSolver {
                     .reduce((a, b) => a + Math.abs(b), 0) / (this.width * this.height),
                 diameterMin: Math.min(...allDiameters),
                 diameterMax: Math.max(...allDiameters),
-                diameterAvg: allDiameters.reduce((a, b) => a + b, 0) / allDiameters.length
+                diameterAvg: allDiameters.reduce((a, b) => a + b, 0) / allDiameters.length,
+                // New Physarum-specific stats
+                significantTubes: significantTubes.length,
+                totalTubes: allDiameters.length,
+                networkDensity: (significantTubes.length / allDiameters.length * 100).toFixed(1),
+                stabilityCounter: this.stabilityCounter,
+                convergenceReason: this.converged ? this.getConvergenceReason() : 'W trakcie'
             }
         };
+    }
+
+    getConvergenceReason() {
+        if (this.iteration >= 150) {
+            return 'Limit iteracji';
+        }
+        const allDiameters = [...this.diameters.horizontal.flat(), ...this.diameters.vertical.flat()];
+        const significantTubes = allDiameters.filter(d => d > 0.1).length;
+        const totalTubes = allDiameters.length;
+        
+        if (significantTubes < totalTubes * 0.3) {
+            return 'Redukcja sieci';
+        }
+        return 'Stabilizacja przepływu';
     }
 }
