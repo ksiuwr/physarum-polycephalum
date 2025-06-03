@@ -33,9 +33,42 @@
                         Generuj Labirynt
                     </button>
                     
+                    <button id="toggleManualMode" class="btn btn--secondary btn--full-width">
+                        <span class="btn-icon">✏️</span>
+                        <span id="manualModeText">Tryb Ręczny</span>
+                    </button>
+                    
+                    <button id="clearMaze" class="btn btn--outline btn--full-width">
+                        <span class="btn-icon">🧹</span>
+                        Wyczyść Labirynt
+                    </button>
+                    
                     <button id="clearPoints" class="btn btn--outline btn--full-width">
                         <span class="btn-icon">🗑️</span>
                         Wyczyść Punkty
+                    </button>
+                </div>
+
+                <div class="card">
+                    <h3>💾 Zarządzanie Labiryntami</h3>
+                    <div class="form-group">
+                        <label class="form-label">Nazwa labiryntu</label>
+                        <input type="text" id="mazeNameInput" class="form-control" placeholder="Wprowadź nazwę..." value="moj_labirynt">
+                    </div>
+                    
+                    <button id="saveMaze" class="btn btn--primary btn--full-width">
+                        <span class="btn-icon">💾</span>
+                        Zapisz Labirynt
+                    </button>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Wczytaj plik JSON</label>
+                        <input type="file" id="loadMazeFile" class="form-control" accept=".json">
+                    </div>
+                    
+                    <button id="loadMaze" class="btn btn--secondary btn--full-width">
+                        <span class="btn-icon">📂</span>
+                        Wczytaj Labirynt
                     </button>
                 </div>
 
@@ -141,6 +174,13 @@
                     <div class="algorithm-indicator" id="algorithmIndicator">
                         Physarum
                     </div>
+                    <div class="manual-mode-indicator hidden" id="manualModeIndicator">
+                        <div class="manual-mode-help">
+                            <strong>Tryb Ręczny:</strong><br>
+                            <span>Lewy klik: Ściana/Ścieżka</span><br>
+                            <span>Prawy klik: Wyczyść komórkę</span>
+                        </div>
+                    </div>
                 </div>
             </main>
 
@@ -216,11 +256,11 @@
                             <h4>Eksploracja</h4>
                             <div class="param-item">
                                 <span>Odwiedzone węzły:</span>
-                                <span id="visitedNodes">0</span>
+                                <span id="visitedCount">0</span>
                             </div>
                             <div class="param-item">
                                 <span>Węzły w kolejce:</span>
-                                <span id="queueNodes">0</span>
+                                <span id="queueSize">0</span>
                             </div>
                         </div>
                         
@@ -337,7 +377,8 @@
                 <div class="card">
                     <h3>📋 Instrukcja</h3>
                     <ol class="instruction-list">
-                        <li>Wygeneruj labirynt</li>
+                        <li>Wygeneruj labirynt lub użyj trybu ręcznego</li>
+                        <li>Zapisz/wczytaj labirynt z pliku JSON</li>
                         <li>Wybierz algorytm</li>
                         <li>Ustaw start (zielony punkt)</li>
                         <li>Ustaw cel (czerwony punkt)</li>

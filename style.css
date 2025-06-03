@@ -1,4 +1,3 @@
-
 :root {
   /* Colors */
   --color-background: rgba(252, 252, 249, 1);
@@ -1339,6 +1338,123 @@ input.form-control:hover {
 @keyframes valueUpdate {
   0% { background: var(--color-primary); color: white; }
   100% { background: var(--color-surface); color: var(--color-text); }
+}
+
+/* Manual mode indicator */
+.manual-mode-indicator {
+  position: absolute;
+  top: 70px;
+  left: 10px;
+  background: rgba(241, 196, 15, 0.95);
+  color: var(--color-text);
+  padding: var(--space-12);
+  border-radius: var(--border-radius-md);
+  font-size: var(--font-size-sm);
+  border: 2px solid rgba(241, 196, 15, 1);
+  box-shadow: var(--shadow-lg);
+  backdrop-filter: blur(4px);
+  z-index: 20;
+  min-width: 200px;
+}
+
+.manual-mode-indicator.hidden {
+  display: none;
+}
+
+.manual-mode-help {
+  line-height: 1.4;
+}
+
+.manual-mode-help strong {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.manual-mode-help span {
+  display: block;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+  margin-top: 2px;
+}
+
+/* File input styling */
+input[type="file"].form-control {
+  padding: var(--space-8);
+  border: 2px dashed var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+input[type="file"].form-control:hover {
+  border-color: var(--color-primary);
+  background: rgba(var(--color-primary-rgb, 33, 128, 141), 0.05);
+}
+
+input[type="file"].form-control:focus {
+  outline: var(--focus-outline);
+  box-shadow: var(--focus-ring);
+}
+
+/* Button states for manual mode */
+.btn.manual-mode-active {
+  background: var(--color-warning);
+  color: white;
+  border-color: var(--color-warning);
+}
+
+.btn.manual-mode-active:hover {
+  background: rgba(168, 75, 47, 0.9);
+  border-color: rgba(168, 75, 47, 0.9);
+}
+
+/* Canvas cursor states */
+.canvas-container.manual-mode {
+  cursor: crosshair;
+}
+
+.canvas-container.manual-mode canvas {
+  cursor: crosshair;
+}
+
+/* Status indicators for file operations */
+.file-operation-status {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: var(--color-success);
+  color: white;
+  padding: var(--space-12) var(--space-16);
+  border-radius: var(--border-radius-md);
+  font-size: var(--font-size-sm);
+  z-index: 1000;
+  opacity: 0;
+  transform: translateY(-20px);
+  transition: all 0.3s ease;
+}
+
+.file-operation-status.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.file-operation-status.error {
+  background: var(--color-error);
+}
+
+.file-operation-status.warning {
+  background: var(--color-warning);
+}
+
+/* Animation for manual drawing */
+@keyframes cellDraw {
+  0% { transform: scale(0.8); opacity: 0.7; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.cell-drawn {
+  animation: cellDraw 0.2s ease-out;
 }
 
 /* Path visualization effects */
