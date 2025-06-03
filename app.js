@@ -756,9 +756,80 @@ class Visualizer {
         }
     }
 
+    drawPotentialField(potentials) {
+        // Draw potential field as background visualization
+        const maxPotential = Math.max(...potentials.flat());
+        if (maxPotential === 0) return;
+        
+        for (let y = 0; y < this.height; y++) {
+            for (let x = 0; x < this.width; x++) {
+                if (this.maze[y][x] === 0) {
+                    const potential = potentials[y][x];
+                    const normalizedPotential = potential / maxPotential;
+                    
+                    if (normalizedPotential > 0.1) {
+                        const cellX = this.offsetX + x * this.cellSize;
+                        const cellY = this.offsetY + y * this.cellSize;
+                        
+                        // Use a gradient from blue (low potential) to red (high potential)
+                        const alpha = normalizedPotential * 0.3;
+                        const red = Math.floor(255 * normalizedPotential);
+                        const blue = Math.floor(255 * (1 - normalizedPotential));
+                        
+                        this.ctx.fillStyle = `rgba(${red}, 100, ${blue}, ${alpha})`;
+                        this.ctx.fillRect(cellX + 2, cellY + 2, this.cellSize - 4, this.cellSize - 4);
+                    }
+                }
+            }
+        }
+    }
+
+    drawPhysarumExploration(data) {
+        // Draw exploration dots during early algorithm stages
+        const iteration = data.iteration;
+        const numDots = Math.min(50, iteration * 2);
+        
+        // Random exploration visualization
+        for (let i = 0; i < numDots; i++) {
+            // Use pseudo-random based on iteration for consistent animation
+            const seed = (iteration * 100 + i) * 9301 + 49297;
+            const rand1 = (seed % 233280) / 233280;
+            const rand2 = ((seed * 7) % 233280) / 233280;
+            
+            const x = Math.floor(rand1 * this.width);
+            const y = Math.floor(rand2 * this.height);
+            
+            if (this.maze[y] && this.maze[y][x] === 0) {
+                const cellX = this.offsetX + (x + 0.5) * this.cellSize;
+                const cellY = this.offsetY + (y + 0.5) * this.cellSize;
+                
+                // Pulsing dots
+                const pulsePhase = (iteration + i * 0.1) % 30;
+                const pulseIntensity = 0.5 + 0.5 * Math.sin(pulsePhase * 0.2);
+                const alpha = 0.4 * pulseIntensity;
+                
+                this.ctx.fillStyle = `rgba(241, 196, 15, ${alpha})`;
+                this.ctx.beginPath();
+                this.ctx.arc(cellX, cellY, 2 + pulseIntensity, 0, 2 * Math.PI);
+                this.ctx.fill();
+            }
+        }
+    }
+
     drawPhysarum(data) {
+        // Draw potential field as background visualization
+        if (data.potentials) {
+            this.drawPotentialField(data.potentials);
+        }
+        
+        // Draw flow network with progressive visualization
         if (data.flows && data.diameters) {
-            this.drawFlows(data.flows, data.diameters);
+            this.drawFlows(data.flows, data.diameters, data.iteration);
+        }
+        
+        // Draw exploration dots for early stages
+        if (data.iteration < 30) {
+            this.drawPhysarumExploration(data);
         }
         
         if (data.path && data.path.length > 0) {
@@ -766,7 +837,7 @@ class Visualizer {
         }
     }
 
-    drawFlows(flows, diameters) {
+    drawFlows(flows, diameters, iteration = 0) {
         const maxDiameter = Math.max(
             Math.max(...diameters.horizontal.flat()),
             Math.max(...diameters.vertical.flat())
@@ -776,16 +847,27 @@ class Visualizer {
         
         this.ctx.lineCap = 'round';
         
+        // Progress factor for gradual revelation
+        const progressFactor = Math.min(1, iteration / 50);
+        const minVisibleDiameter = 0.01 * (1 - progressFactor * 0.8);
+        
         // Horizontal flows
         for (let y = 0; y < this.height; y++) {
             for (let x = 0; x < this.width - 1; x++) {
                 if (this.maze[y][x] === 0 && this.maze[y][x + 1] === 0) {
                     const diameter = diameters.horizontal[y][x];
                     
-                    if (diameter > 0.01) {
+                    if (diameter > minVisibleDiameter) {
                         const normalizedDiameter = diameter / maxDiameter;
-                        const lineWidth = Math.max(1, normalizedDiameter * 8);
-                        const alpha = Math.min(0.8, normalizedDiameter);
+                        
+                        // Dynamic line width based on iteration
+                        const baseWidth = Math.max(1, normalizedDiameter * 8);
+                        const widthMultiplier = 0.3 + 0.7 * progressFactor;
+                        const lineWidth = baseWidth * widthMultiplier;
+                        
+                        // Dynamic alpha for gradual appearance
+                        const baseAlpha = Math.min(0.8, normalizedDiameter);
+                        const alpha = baseAlpha * (0.2 + 0.8 * progressFactor);
                         
                         const x1 = this.offsetX + (x + 0.2) * this.cellSize;
                         const x2 = this.offsetX + (x + 0.8) * this.cellSize;
@@ -797,6 +879,16 @@ class Visualizer {
                         this.ctx.moveTo(x1, y1);
                         this.ctx.lineTo(x2, y1);
                         this.ctx.stroke();
+                        
+                        // Add pulsing effect during early iterations
+                        if (iteration < 30 && Math.random() < 0.1) {
+                            this.ctx.strokeStyle = `rgba(241, 196, 15, ${alpha * 1.5})`;
+                            this.ctx.lineWidth = lineWidth + 2;
+                            this.ctx.beginPath();
+                            this.ctx.moveTo(x1, y1);
+                            this.ctx.lineTo(x2, y1);
+                            this.ctx.stroke();
+                        }
                     }
                 }
             }
@@ -808,10 +900,17 @@ class Visualizer {
                 if (this.maze[y][x] === 0 && this.maze[y + 1][x] === 0) {
                     const diameter = diameters.vertical[y][x];
                     
-                    if (diameter > 0.01) {
+                    if (diameter > minVisibleDiameter) {
                         const normalizedDiameter = diameter / maxDiameter;
-                        const lineWidth = Math.max(1, normalizedDiameter * 8);
-                        const alpha = Math.min(0.8, normalizedDiameter);
+                        
+                        // Dynamic line width based on iteration
+                        const baseWidth = Math.max(1, normalizedDiameter * 8);
+                        const widthMultiplier = 0.3 + 0.7 * progressFactor;
+                        const lineWidth = baseWidth * widthMultiplier;
+                        
+                        // Dynamic alpha for gradual appearance
+                        const baseAlpha = Math.min(0.8, normalizedDiameter);
+                        const alpha = baseAlpha * (0.2 + 0.8 * progressFactor);
                         
                         const x1 = this.offsetX + (x + 0.5) * this.cellSize;
                         const y1 = this.offsetY + (y + 0.2) * this.cellSize;
@@ -823,6 +922,16 @@ class Visualizer {
                         this.ctx.moveTo(x1, y1);
                         this.ctx.lineTo(x1, y2);
                         this.ctx.stroke();
+                        
+                        // Add pulsing effect during early iterations
+                        if (iteration < 30 && Math.random() < 0.1) {
+                            this.ctx.strokeStyle = `rgba(241, 196, 15, ${alpha * 1.5})`;
+                            this.ctx.lineWidth = lineWidth + 2;
+                            this.ctx.beginPath();
+                            this.ctx.moveTo(x1, y1);
+                            this.ctx.lineTo(x1, y2);
+                            this.ctx.stroke();
+                        }
                     }
                 }
             }
