@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wizualizacja Algorytmów Znajdowania Ścieżki - 5 Algorytmów</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>Wizualizacja Algorytmów Znajdowania Ścieżki</h1>
+            <p>Physarum, BFS, DFS, Dijkstra, A* - Kompletna analiza porównawcza</p>
+        </header>
+
+        <div class="main-layout">
+            <!-- Kolumna 1: Kontrole (300px) -->
+            <aside class="controls-panel">
+                <div class="card">
+                    <h3>🗂️ Generowanie Labiryntu</h3>
+                    <div class="form-group">
+                        <label class="form-label">Rozmiar labiryntu</label>
+                        <select id="mazeSize" class="form-control">
+                            <option value="15">Mały (15x15)</option>
+                            <option value="25" selected>Średni (25x25)</option>
+                            <option value="35">Duży (35x35)</option>
+                            <option value="45">Bardzo duży (45x45)</option>
+                        </select>
+                    </div>
+                    
+                    <button id="generateMaze" class="btn btn--primary btn--full-width">
+                        <span class="btn-icon">🔄</span>
+                        Generuj Labirynt
+                    </button>
+                    
+                    <button id="clearPoints" class="btn btn--outline btn--full-width">
+                        <span class="btn-icon">🗑️</span>
+                        Wyczyść Punkty
+                    </button>
+                </div>
+
+                <div class="card">
+                    <h3>🧠 Wybór Algorytmu</h3>
+                    <div class="algorithm-selection">
+                        <label class="radio-option">
+                            <input type="radio" name="algorithm" value="physarum" checked>
+                            <span class="radio-custom" style="--algo-color: #f1c40f"></span>
+                            <span class="algo-info">
+                                <strong>Physarum</strong>
+                                <small>Algorytm śluzowca</small>
+                            </span>
+                        </label>
+                        
+                        <label class="radio-option">
+                            <input type="radio" name="algorithm" value="bfs">
+                            <span class="radio-custom" style="--algo-color: #3498db"></span>
+                            <span class="algo-info">
+                                <strong>BFS</strong>
+                                <small>Przeszukiwanie wszerz</small>
+                            </span>
+                        </label>
+                        
+                        <label class="radio-option">
+                            <input type="radio" name="algorithm" value="dfs">
+                            <span class="radio-custom" style="--algo-color: #2ecc71"></span>
+                            <span class="algo-info">
+                                <strong>DFS</strong>
+                                <small>Przeszukiwanie w głąb</small>
+                            </span>
+                        </label>
+                        
+                        <label class="radio-option">
+                            <input type="radio" name="algorithm" value="dijkstra">
+                            <span class="radio-custom" style="--algo-color: #9b59b6"></span>
+                            <span class="algo-info">
+                                <strong>Dijkstra</strong>
+                                <small>Najkrótsza ścieżka z wagami</small>
+                            </span>
+                        </label>
+                        
+                        <label class="radio-option">
+                            <input type="radio" name="algorithm" value="astar">
+                            <span class="radio-custom" style="--algo-color: #e67e22"></span>
+                            <span class="algo-info">
+                                <strong>A*</strong>
+                                <small>Heurystyka Manhattan</small>
+                            </span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>⚡ Kontrola Symulacji</h3>
+                    <div class="simulation-controls">
+                        <button id="startSim" class="btn btn--secondary btn--full-width">
+                            <span class="btn-icon">▶️</span>
+                            Start Symulacji
+                        </button>
+                        
+                        <button id="pauseSim" class="btn btn--outline btn--full-width hidden">
+                            <span class="btn-icon">⏸️</span>
+                            Pauza
+                        </button>
+                        
+                        <button id="resetSim" class="btn btn--outline btn--full-width">
+                            <span class="btn-icon">🔄</span>
+                            Reset
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>⚙️ Parametry Algorytmu</h3>
+                    <div class="form-group">
+                        <label class="form-label">Iteracje Physarum</label>
+                        <input type="range" id="physarumIterations" class="form-control" min="5" max="50" value="10">
+                        <span class="range-value" id="physarumIterationsValue">10</span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Delta Time (dt)</label>
+                        <input type="range" id="deltaTime" class="form-control" min="0.01" max="0.5" step="0.01" value="0.1">
+                        <span class="range-value" id="deltaTimeValue">0.1</span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Próg konwergencji</label>
+                        <input type="range" id="convergenceThreshold" class="form-control" min="0.0001" max="0.01" step="0.0001" value="0.001">
+                        <span class="range-value" id="convergenceThresholdValue">0.001</span>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Kolumna 2: Canvas (elastyczna) -->
+            <main class="visualization-area">
+                <div class="canvas-container">
+                    <canvas id="mazeCanvas" width="800" height="800"></canvas>
+                    <div class="mode-indicator" id="modeIndicator">
+                        Kliknij aby ustawić punkt startowy
+                    </div>
+                    <div class="algorithm-indicator" id="algorithmIndicator">
+                        Physarum
+                    </div>
+                </div>
+            </main>
+
+            <!-- Kolumna 3: Panel parametrów w czasie rzeczywistym (280px) -->
+            <aside class="realtime-panel">
+                <div class="card">
+                    <h3>📊 Parametry w Czasie Rzeczywistym</h3>
+                    
+                    <div class="physarum-params" id="physarumParams">
+                        <div class="param-group">
+                            <h4>Potencjały</h4>
+                            <div class="param-item">
+                                <span>Min:</span>
+                                <span id="potentialMin">0.000</span>
+                            </div>
+                            <div class="param-item">
+                                <span>Max:</span>
+                                <span id="potentialMax">1.000</span>
+                            </div>
+                            <div class="param-item">
+                                <span>Średnie:</span>
+                                <span id="potentialAvg">0.500</span>
+                            </div>
+                        </div>
+                        
+                        <div class="param-group">
+                            <h4>Przepływy</h4>
+                            <div class="param-item">
+                                <span>Maksymalny:</span>
+                                <span id="flowMax">0.000</span>
+                            </div>
+                            <div class="param-item">
+                                <span>Średni:</span>
+                                <span id="flowAvg">0.000</span>
+                            </div>
+                        </div>
+                        
+                        <div class="param-group">
+                            <h4>Średnice</h4>
+                            <div class="param-item">
+                                <span>Min:</span>
+                                <span id="diameterMin">0.100</span>
+                            </div>
+                            <div class="param-item">
+                                <span>Max:</span>
+                                <span id="diameterMax">0.100</span>
+                            </div>
+                            <div class="param-item">
+                                <span>Średnie:</span>
+                                <span id="diameterAvg">0.100</span>
+                            </div>
+                        </div>
+                        
+                        <div class="param-group">
+                            <h4>Konwergencja</h4>
+                            <div class="param-item">
+                                <span>Próg:</span>
+                                <span id="convThreshold">0.001</span>
+                            </div>
+                            <div class="param-item">
+                                <span>Licznik:</span>
+                                <span id="convCounter">0</span>
+                            </div>
+                            <div class="param-item">
+                                <span>Status:</span>
+                                <span id="convStatus">W trakcie</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="standard-params" id="standardParams" style="display: none;">
+                        <div class="param-group">
+                            <h4>Eksploracja</h4>
+                            <div class="param-item">
+                                <span>Odwiedzone węzły:</span>
+                                <span id="visitedNodes">0</span>
+                            </div>
+                            <div class="param-item">
+                                <span>Węzły w kolejce:</span>
+                                <span id="queueNodes">0</span>
+                            </div>
+                        </div>
+                        
+                        <div class="param-group">
+                            <h4>Ścieżka</h4>
+                            <div class="param-item">
+                                <span>Długość ścieżki:</span>
+                                <span id="pathLength">-</span>
+                            </div>
+                            <div class="param-item">
+                                <span>Czas wykonania:</span>
+                                <span id="executionTime">0ms</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Kolumna 4: Statystyki i kontrola prędkości (280px) -->
+            <aside class="stats-panel">
+                <div class="card">
+                    <h3>🎛️ Slow Motion Control</h3>
+                    <div class="speed-control">
+                        <label class="form-label">Prędkość symulacji</label>
+                        <input type="range" id="speedSlider" class="form-control speed-slider" 
+                               min="0.1" max="5.0" step="0.1" value="1.0">
+                        <div class="speed-display">
+                            <span id="speedValue">1.0</span>x
+                        </div>
+                        <div class="speed-markers">
+                            <span>0.1x</span>
+                            <span>1.0x</span>
+                            <span>5.0x</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>📈 Statystyki</h3>
+                    <div class="stat-item">
+                        <span class="stat-label">Iteracja/Krok:</span>
+                        <span class="stat-value" id="currentIteration">0</span>
+                    </div>
+                    
+                    <div class="stat-item">
+                        <span class="stat-label">Czas symulacji:</span>
+                        <span class="stat-value" id="simulationTime">0.0s</span>
+                    </div>
+                    
+                    <div class="stat-item">
+                        <span class="stat-label">Algorytm:</span>
+                        <span class="stat-value" id="currentAlgorithm">Physarum</span>
+                    </div>
+                    
+                    <div class="stat-item">
+                        <span class="stat-label">Status:</span>
+                        <span class="status status--info" id="status">Gotowy</span>
+                    </div>
+                    
+                    <div class="stat-item">
+                        <span class="stat-label">Znaleziono ścieżkę:</span>
+                        <span class="stat-value" id="pathFound">-</span>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>🎨 Legenda Kolorów</h3>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #34495e;"></div>
+                        <span>Ściana</span>
+                    </div>
+                    
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #ffffff; border: 1px solid #ddd;"></div>
+                        <span>Ścieżka</span>
+                    </div>
+                    
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #27ae60;"></div>
+                        <span>Start</span>
+                    </div>
+                    
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #e74c3c;"></div>
+                        <span>Cel</span>
+                    </div>
+                    
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #f1c40f;"></div>
+                        <span>Physarum</span>
+                    </div>
+                    
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #3498db;"></div>
+                        <span>BFS</span>
+                    </div>
+                    
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #2ecc71;"></div>
+                        <span>DFS</span>
+                    </div>
+                    
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #9b59b6;"></div>
+                        <span>Dijkstra</span>
+                    </div>
+                    
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #e67e22;"></div>
+                        <span>A*</span>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>📋 Instrukcja</h3>
+                    <ol class="instruction-list">
+                        <li>Wygeneruj labirynt</li>
+                        <li>Wybierz algorytm</li>
+                        <li>Ustaw start (zielony punkt)</li>
+                        <li>Ustaw cel (czerwony punkt)</li>
+                        <li>Dostosuj prędkość</li>
+                        <li>Uruchom symulację</li>
+                        <li>Obserwuj parametry na żywo</li>
+                    </ol>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
