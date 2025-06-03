@@ -1095,28 +1095,6 @@ input[type="range"]::-moz-range-thumb {
   font-family: var(--font-family-mono);
 }
 
-/* Legend */
-.legend-item {
-  display: flex;
-  align-items: center;
-  margin-bottom: var(--space-8);
-  padding: var(--space-4);
-  border-radius: var(--radius-sm);
-  transition: var(--transition-smooth);
-}
-
-.legend-item:hover {
-  background: var(--color-secondary);
-}
-
-.legend-color {
-  width: 20px;
-  height: 20px;
-  border-radius: var(--radius-sm);
-  margin-right: var(--space-12);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  border: 1px solid var(--color-border);
-}
 
 /* Instructions */
 .instruction-list {
