@@ -49,28 +49,7 @@
                     </button>
                 </div>
 
-                <div class="card">
-                    <h3>💾 Zarządzanie Labiryntami</h3>
-                    <div class="form-group">
-                        <label class="form-label">Nazwa labiryntu</label>
-                        <input type="text" id="mazeNameInput" class="form-control" placeholder="Wprowadź nazwę..." value="moj_labirynt">
-                    </div>
-                    
-                    <button id="saveMaze" class="btn btn--primary btn--full-width">
-                        <span class="btn-icon">💾</span>
-                        Zapisz Labirynt
-                    </button>
-                    
-                    <div class="form-group">
-                        <label class="form-label">Wczytaj plik JSON</label>
-                        <input type="file" id="loadMazeFile" class="form-control" accept=".json">
-                    </div>
-                    
-                    <button id="loadMaze" class="btn btn--secondary btn--full-width">
-                        <span class="btn-icon">📂</span>
-                        Wczytaj Labirynt
-                    </button>
-                </div>
+
 
                 <div class="card">
                     <h3>🧠 Wybór Algorytmu</h3>
@@ -122,25 +101,7 @@
                     </div>
                 </div>
 
-                <div class="card">
-                    <h3>⚡ Kontrola Symulacji</h3>
-                    <div class="simulation-controls">
-                        <button id="startSim" class="btn btn--secondary btn--full-width">
-                            <span class="btn-icon">▶️</span>
-                            Start Symulacji
-                        </button>
-                        
-                        <button id="pauseSim" class="btn btn--outline btn--full-width hidden">
-                            <span class="btn-icon">⏸️</span>
-                            Pauza
-                        </button>
-                        
-                        <button id="resetSim" class="btn btn--outline btn--full-width">
-                            <span class="btn-icon">🔄</span>
-                            Reset
-                        </button>
-                    </div>
-                </div>
+
 
                 <div class="card">
                     <h3>⚙️ Parametry Algorytmu</h3>
@@ -180,6 +141,41 @@
                             <span>Lewy klik: Ściana/Ścieżka</span><br>
                             <span>Prawy klik: Wyczyść komórkę</span>
                         </div>
+                    </div>
+                </div>
+                
+                <!-- Kontrolki pod labiryntem -->
+                <div class="maze-controls">
+                    <div class="control-group">
+                        <button id="startSim" class="btn btn--secondary">
+                            <span class="btn-icon">▶️</span>
+                            Start
+                        </button>
+                        
+                        <button id="pauseSim" class="btn btn--outline hidden">
+                            <span class="btn-icon">⏸️</span>
+                            Pauza
+                        </button>
+                        
+                        <button id="resetSim" class="btn btn--outline">
+                            <span class="btn-icon">🔄</span>
+                            Reset
+                        </button>
+                    </div>
+
+                    <div class="control-group">
+                        <input type="text" id="mazeNameInput" class="form-control" placeholder="Nazwa labiryntu..." value="moj_labirynt">
+                        
+                        <button id="saveMaze" class="btn btn--primary">
+                            <span class="btn-icon">💾</span>
+                            Zapisz
+                        </button>
+                        
+                        <input type="file" id="loadMazeFile" class="form-control" accept=".json" style="display: none;">
+                        <button id="loadMaze" class="btn btn--secondary" onclick="document.getElementById('loadMazeFile').click()">
+                            <span class="btn-icon">📂</span>
+                            Wczytaj
+                        </button>
                     </div>
                 </div>
             </main>
